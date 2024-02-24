@@ -1,9 +1,9 @@
 import express from "express";
+import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import connectToDB from "./DB/index.js";
 import userRouter from "./routes/user.router.js";
-import cookieParser from "cookie-parser";
 
 dotenv.config({ path: "/.env" });
 
@@ -13,7 +13,7 @@ const port = process.env.PORT || 8000;
 app.use(express.json());
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN,
+    origin: process.env.CORS_ORIGIN || "https://blogslay.onrender.com/",
     credentials: true,
   })
 );
