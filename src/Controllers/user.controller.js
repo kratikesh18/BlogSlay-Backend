@@ -2,6 +2,7 @@ import ApiError from "../Utils/ApiError.js";
 import ApiResponse from "../Utils/ApiResponse.js";
 import { deleteExisting, updloadFileToCloud } from "../Utils/Cloudinary.js";
 import asyncHandler from "../Utils/asyncHandler.js";
+import { Comment } from "../models/comments.model.js";
 import { Post } from "../models/posts.model.js";
 import { User } from "../models/user.model.js";
 import jwt from "jsonwebtoken";
@@ -41,7 +42,10 @@ const registerUser = asyncHandler(async (req, res) => {
 
 const loginUser = asyncHandler(async (req, res) => {
   const { username, password } = req.body;
-
+  console.log("Request Recived");
+  for (let key in req.body) {
+    console.log(key + " : " + req.body[key]);
+  }
   if (!username && !password) {
     throw new ApiError(403, "Creadentials Required");
   }
@@ -196,6 +200,22 @@ const updatePost = asyncHandler(async (req, res) => {
     .status(201)
     .json(new ApiResponse(201, doc, "post is updated succssfully"));
 });
+
+// const addComment = asyncHandler(async (req, res) => {
+//   const { commentContent } = req.body;
+//   const authorId = req.user?._id;
+
+//   if (!commentContent) {
+//     throw new ApiError(402, "Comment Field is Required");
+//   }
+
+//   await Comment.create({
+//     commentAuthor:authorId,
+//     commentContent:commentContent,
+//     post:
+//   });
+// });
+
 export {
   registerUser,
   loginUser,

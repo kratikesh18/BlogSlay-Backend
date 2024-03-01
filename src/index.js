@@ -13,16 +13,14 @@ const port = process.env.PORT || 8000;
 app.use(express.json());
 app.use(
   cors({
-    origin: [process.env.CORS_ORIGIN, "https://blogslay.onrender.com/"],
+    origin: process.env.CORS_ORIGIN,
     credentials: true,
   })
 );
+
+console.log(process.env.CORS_ORIGIN);
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(cookieParser());
-// app.post("/register", (req, res) => {
-//   const { username, email, password } = req.body;
-//   res.json({ requestData: { username, password, email } });
-// });
 
 app.use("/api/v1/user", userRouter);
 
