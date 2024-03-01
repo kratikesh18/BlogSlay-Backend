@@ -2,7 +2,7 @@ import ApiError from "../Utils/ApiError.js";
 import ApiResponse from "../Utils/ApiResponse.js";
 import { deleteExisting, updloadFileToCloud } from "../Utils/Cloudinary.js";
 import asyncHandler from "../Utils/asyncHandler.js";
-import { Comment } from "../models/comments.model.js";
+// import { Comment } from "../models/comments.model.js";
 import { Post } from "../models/posts.model.js";
 import { User } from "../models/user.model.js";
 import jwt from "jsonwebtoken";

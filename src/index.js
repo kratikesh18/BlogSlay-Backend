@@ -10,7 +10,9 @@ dotenv.config({ path: "/.env" });
 const app = express();
 const port = process.env.PORT || 8000;
 
+//this will convert the req body from string to json
 app.use(express.json());
+
 app.use(
   cors({
     origin: process.env.CORS_ORIGIN,
