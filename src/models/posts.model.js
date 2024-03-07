@@ -22,6 +22,11 @@ const postSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    likeCounts: {
+      type: Number,
+      default: 0,
+    },
+    comments: [{ type: mongoose.Types.ObjectId, ref: "Comment" }],
   },
   { timestamps: true }
 );

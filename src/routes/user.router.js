@@ -1,26 +1,35 @@
 import { Router } from "express";
+import { upload } from "../Middlewares/multer.middleware.js";
+import { verifyJwt } from "../Middlewares/auth.middleware.js";
+
 import {
-  createNewPost,
-  getAllPosts,
   getProfile,
   loginUser,
   logoutUser,
-  post,
   registerUser,
-  updatePost,
 } from "../Controllers/user.controller.js";
 
-import { upload } from "../Middlewares/multer.middleware.js";
-import { verifyJwt } from "../Middlewares/auth.middleware.js";
+import {
+  addComment,
+  createNewPost,
+  deletePost,
+  getAllPosts,
+  getMyAllPosts,
+  post,
+  updatePost,
+} from "../Controllers/post.controller.js";
 
 const router = Router();
 
 router.route("/register").post(registerUser);
 router.route("/login").post(loginUser);
-router.route("/profile").get(getProfile);
+router.route("/profile").get(verifyJwt, getProfile);
 router.route("/logout").post(logoutUser);
+
 router.route("/allposts").get(getAllPosts);
 router.route("/post/:id").get(post);
+router.route("/getMyPosts").get(verifyJwt, getMyAllPosts);
+router.route("/addComment").post(verifyJwt, addComment);
 
 router
   .route("/updatePost")
@@ -30,4 +39,7 @@ router
   .route("/createNewPost")
   .post(verifyJwt, upload.single("coverImage"), createNewPost);
 // upload.fields([{ name: "blogImage", maxCount: 1 }])
+
+router.route("/delete/:id").delete(deletePost);
+
 export default router;

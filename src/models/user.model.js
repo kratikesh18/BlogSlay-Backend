@@ -16,6 +16,9 @@ const userSchema = new Schema({
     required: true,
     unique: true,
   },
+  // posts:{
+
+  // }
 });
 
 userSchema.pre("save", async function (next) {

@@ -55,7 +55,7 @@ const deleteExisting = async (previousImgUrl) => {
         type: "upload",
         resource_type: "image",
       })
-      .then(console.log("File is deleted"));
+      .then(console.log("File is deleted from cloud"));
   } catch (error) {
     console.log(error.message);
   }
