@@ -76,7 +76,7 @@ const post = asyncHandler(async (req, res) => {
     .select("-post");
   // console.log("printing comments ", comments);
   postDoc.comments = comments;
-  console.log(comments);
+
   if (!postDoc) {
     throw new ApiError(404, "No post data found! ");
   }
@@ -169,16 +169,106 @@ const addComment = asyncHandler(async (req, res) => {
     post: id,
   });
 
-  // update the post by the comment
-  await Post.findByIdAndUpdate(id, {
-    $push: { comments: createdComment },
-  });
+  try {
+    // update the post by the comment
+    await Post.findByIdAndUpdate(id, {
+      $push: { comments: createdComment },
+    });
 
+    await User.findByIdAndUpdate(authorId, {
+      $push: { myComments: createdComment._id },
+    });
+  } catch (error) {
+    throw new ApiError(400, error.message);
+  }
   console.log(createdComment);
   return res
     .status(200)
     .json(new ApiResponse(200, createdComment, "comment posted successfullly"));
 });
+
+const deleteComment = asyncHandler(async (req, res) => {
+  const { commentId } = req.body;
+  const userId = req.user?._id;
+
+  if (!commentId) {
+    throw new ApiError(400, "CommentId  not found");
+  }
+
+  const commentToDelete = await Comment.findById(commentId);
+
+  const { post } = commentToDelete;
+
+  const postToUpdate = await Post.findByIdAndUpdate(post, {
+    $pull: { comments: commentId },
+  });
+
+  await User.findByIdAndUpdate(userId, {
+    $pull: { myComments: commentId },
+  });
+
+  const deletedComment = await Comment.findByIdAndDelete(commentId);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, deletedComment, "Comment deleted successfully"));
+});
+
+const increaseLikes = asyncHandler(async (req, res) => {
+  const { id } = req.body;
+  const viewerId = req.user?._id;
+
+  if (!id || !viewerId) {
+    return new ApiError(400, "No post id or userid found");
+  }
+
+  try {
+    await Post.findByIdAndUpdate(id, {
+      $addToSet: { likeCounts: viewerId },
+    });
+    await User.findByIdAndUpdate(viewerId, {
+      $addToSet: { likedPosts: id },
+    });
+  } catch (error) {
+    throw new ApiError(400, error.message);
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, { message: "post liked" }, "post liked successfully")
+    );
+});
+
+const removeLike = asyncHandler(async (req, res) => {
+  const { id } = req.body;
+  const viewerId = req.user?._id;
+
+  if (!id) {
+    throw new ApiError(400, "No PostId found");
+  }
+  try {
+    await Post.findByIdAndUpdate(id, {
+      $pull: { likeCounts: viewerId },
+    });
+    await User.findByIdAndUpdate(viewerId, {
+      $pull: { likedPosts: id },
+    });
+  } catch (error) {
+    throw new ApiError(400, error.message);
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { message: "liked removed" },
+        "like removed successfully"
+      )
+    );
+});
+
 export {
   updatePost,
   createNewPost,
@@ -187,6 +277,9 @@ export {
   getMyAllPosts,
   deletePost,
   addComment,
+  increaseLikes,
+  removeLike,
+  deleteComment,
 };
 
 // ************* GARBAGE *********//

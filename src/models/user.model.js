@@ -1,6 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+
 const userSchema = new Schema({
   username: {
     type: String,
@@ -16,9 +17,21 @@ const userSchema = new Schema({
     required: true,
     unique: true,
   },
-  // posts:{
+  profileCoverImage: {
+    type: String,
+    default:
+      "https://images.pexels.com/photos/4483237/pexels-photo-4483237.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+  },
+  profileAvatar: {
+    type: String,
+    default:
+      "https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+  },
+  likedPosts: [{ type: mongoose.Types.ObjectId, ref: "Post" }],
 
-  // }
+  myComments: [{ type: mongoose.Types.ObjectId, ref: "Comment" }],
+
+  myPosts: [{ type: mongoose.Types.ObjectId, ref: "Post" }],
 });
 
 userSchema.pre("save", async function (next) {

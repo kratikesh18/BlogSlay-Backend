@@ -3,6 +3,10 @@ import ApiResponse from "../Utils/ApiResponse.js";
 import asyncHandler from "../Utils/asyncHandler.js";
 import { User } from "../models/user.model.js";
 import jwt from "jsonwebtoken";
+import { deleteExisting, updloadFileToCloud } from "../Utils/Cloudinary.js";
+import { Post } from "../models/posts.model.js";
+import { Comment } from "../models/comments.model.js";
+import { post } from "./post.controller.js";
 
 const registerUser = asyncHandler(async (req, res) => {
   const { email, username, password } = req.body;
@@ -61,7 +65,7 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 
   const LoggedInUser = await User.findById(user._id).select("-password");
-  
+
   const accessToken = await user.genrateAccessToken();
 
   return res
@@ -75,7 +79,7 @@ const getProfile = asyncHandler(async (req, res) => {
   if (!token) {
     throw new ApiError(403, "Must have to login to access the page");
   }
-
+  //we created the verify jwt middleware for the below task
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, {}, (error, info) => {
     if (error) {
       throw new ApiError(400, error.message);
@@ -86,6 +90,24 @@ const getProfile = asyncHandler(async (req, res) => {
   });
 });
 
+const getUserProfile = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+  if (!userId) {
+    throw new ApiError(400, "Verification token not found");
+  }
+
+  const userProfileDoc = await User.findById(userId).select("-password  -__v");
+
+  if (!userProfileDoc) {
+    throw new ApiError(400, "User not found");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, userProfileDoc, "Profile data fetched successfully")
+    );
+});
 
 const logoutUser = asyncHandler(async (req, res) => {
   res.clearCookie("token");
@@ -94,6 +116,100 @@ const logoutUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, { succcess: "user logged out " }));
 });
 
+const updateUserInfo = asyncHandler(async (req, res) => {
+  const { email, username } = req.body;
+  const userid = req.user?._id;
 
+  const avatarImagePath = req?.files?.avatar[0].path;
+  const coverImagePath = req?.files?.coverImage[0].path;
 
-export { registerUser, loginUser, getProfile, logoutUser };
+  console.log(avatarImagePath, coverImagePath);
+
+  if (!email && !username && !avatarImagePath && !coverImagePath) {
+    return res
+      .status(201)
+      .json(
+        new ApiResponse(
+          201,
+          { data: "no updation found" },
+          "proile not updated "
+        )
+      );
+  }
+
+  const userprofileToUpdate = await User.findById(userid);
+
+  if (!userprofileToUpdate) {
+    throw new ApiError(400, "No user found");
+  }
+
+  const { profileCoverImage, profileAvatar } = userprofileToUpdate;
+
+  const newCoverImageUrl = await updloadFileToCloud(coverImagePath);
+  const newAvatarImageUrl = await updloadFileToCloud(avatarImagePath);
+
+  if (!newCoverImageUrl || !newAvatarImageUrl) {
+    throw new ApiError(500, "error while uploading files to cloud");
+  }
+
+  if (profileCoverImage || profileAvatar) {
+    await deleteExisting(profileCoverImage);
+    await deleteExisting(profileAvatar);
+  }
+
+  try {
+    await userprofileToUpdate.updateOne({
+      username: username,
+      email: email,
+      profileCoverImage: newCoverImageUrl?.url,
+      profileAvatar: newAvatarImageUrl?.url,
+    });
+  } catch (error) {
+    throw new ApiError(500, error.message);
+  }
+
+  const userToSend = await User.findById(userid);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, userToSend, "User Updated Successfully"));
+});
+
+const getLikedPosts = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+
+  const likedPosts = await Post.find({
+    likeCounts: { $in: [userId] },
+  }).populate("author", ["username"]);
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, likedPosts, "all liked posts fetched sucessfully")
+    );
+});
+
+const getUserComments = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+  if (!userId) {
+    throw new ApiError(400, "NO user id found");
+  }
+
+  const comments = await Comment.find({ author: userId })
+    .sort({ createdAt: -1 })
+    .populate("post", ["coverImage"]);
+  return res
+    .status(200)
+    .json(new ApiResponse(200, comments, "comments fetched successfully"));
+});
+
+export {
+  updateUserInfo,
+  registerUser,
+  loginUser,
+  getProfile,
+  logoutUser,
+  getUserProfile,
+  getLikedPosts,
+  getUserComments,
+};
