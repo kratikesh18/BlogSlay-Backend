@@ -72,6 +72,8 @@ const loginUser = asyncHandler(async (req, res) => {
     .status(200)
     .cookie("token", accessToken, {
       expires: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+      HttpOnly: true,
+      secure: true,
     })
     .json(new ApiResponse(200, LoggedInUser, "user logged in successfully"));
 });
