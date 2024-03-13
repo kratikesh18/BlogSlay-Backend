@@ -15,7 +15,11 @@ app.use(express.json());
 
 app.use(
   cors({
-    origin: [process.env.CORS_ORIGIN, "http://localhost:5174"],
+    origin: [
+      process.env.CORS_ORIGIN,
+      "http://localhost:5174",
+      "https://blog-slay-front-end.vercel.app/",
+    ],
     credentials: true,
   })
 );
