@@ -18,7 +18,7 @@ app.use(
     origin: [
       process.env.CORS_ORIGIN,
       "http://localhost:5174",
-      "https://blog-slay-front-end.vercel.app/",
+      "https://blog-slay-front-end.vercel.app",
     ],
     credentials: true,
   })
