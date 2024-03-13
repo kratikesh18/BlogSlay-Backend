@@ -70,7 +70,9 @@ const loginUser = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .cookie("token", accessToken)
+    .cookie("token", accessToken, {
+      expires: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+    })
     .json(new ApiResponse(200, LoggedInUser, "user logged in successfully"));
 });
 
