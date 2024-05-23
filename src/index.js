@@ -25,7 +25,7 @@ app.use(
   })
 );
 
-console.log(process.env.CORS_ORIGIN);
+// console.log(process.env.CORS_ORIGIN);
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(cookieParser());
 
