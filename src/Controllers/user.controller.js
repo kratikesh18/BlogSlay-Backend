@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken";
 import { deleteExisting, updloadFileToCloud } from "../Utils/Cloudinary.js";
 import { Post } from "../models/posts.model.js";
 import { Comment } from "../models/comments.model.js";
-import { post } from "./post.controller.js";
+import { transporter } from "../Utils/Nodemailer.js";
 
 const registerUser = asyncHandler(async (req, res) => {
   const { email, username, password } = req.body;
@@ -55,7 +55,7 @@ const loginUser = asyncHandler(async (req, res) => {
   const user = await User.findOne({ username });
 
   if (!user) {
-    throw new ApiError(406, "User not found Kindly Register");
+    throw new ApiError(406, "User not found 🫤");
   }
 
   const isPasswordValid = await user.isPasswordCorrect(password);
@@ -68,6 +68,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
   const accessToken = await user.genrateAccessToken();
 
+  console.log("\tUser found & logged In successfully!");
   return res
     .status(200)
     .cookie("token", accessToken, {
@@ -120,23 +121,94 @@ const logoutUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, { succcess: "user logged out " }));
 });
 
+// const updateUserInfo = asyncHandler(async (req, res) => {
+//   //extracting the username and email and getting  the userid
+//   const { email, username } = req.body;
+//   const userid = req.user?._id;
+
+//   // getting the files for updation
+//   const avatarImagePath = req?.files?.avatar[0].path;
+//   const coverImagePath = req?.files?.coverImage[0].path;
+
+//   console.log(avatarImagePath, coverImagePath);
+
+//   // if theree is not updateion we are sending response to nothing
+//   if (!email && !username && !avatarImagePath && !coverImagePath) {
+//     return res
+//       .status(201)
+//       .json(
+//         new ApiResponse(
+//           201,
+//           { data: "no updation found" },
+//           "proile not updated "
+//         )
+//       );
+//   }
+
+//   // now we have updation thats why we are finding the user
+//   const userprofileToUpdate = await User.findById(userid);
+
+//   if (!userprofileToUpdate) {
+//     throw new ApiError(400, "No user found");
+//   }
+
+//   // getting the existing urls of the photos
+//   const { profileCoverImage, profileAvatar } = userprofileToUpdate;
+
+//   // we have new photos to upload so we are uploading and getting the url
+//   const newCoverImageUrl = await updloadFileToCloud(coverImagePath);
+//   const newAvatarImageUrl = await updloadFileToCloud(avatarImagePath);
+
+//   //handling url
+//   if (!newCoverImageUrl || !newAvatarImageUrl) {
+//     throw new ApiError(500, "error while uploading files to cloud");
+//   }
+
+//   // deleting the existing the if they exist
+//   if (profileCoverImage) {
+//     await deleteExisting(profileCoverImage);
+//   }
+//   if (profileAvatar) {
+//     await deleteExisting(profileAvatar);
+//   }
+
+//   // updating the userProfileToUpdate
+//   try {
+//     await userprofileToUpdate.updateOne({
+//       username: username,
+//       email: email,
+//       profileCoverImage: newCoverImageUrl?.url,
+//       profileAvatar: newAvatarImageUrl?.url,
+//     });
+//   } catch (error) {
+//     throw new ApiError(500, error.message);
+//   }
+
+//   const userToSend = await User.findById(userid);
+
+//   return res
+//     .status(200)
+//     .json(new ApiResponse(200, userToSend, "User Updated Successfully"));
+// });
+
+// Not mine code
+
 const updateUserInfo = asyncHandler(async (req, res) => {
   const { email, username } = req.body;
   const userid = req.user?._id;
 
-  const avatarImagePath = req?.files?.avatar[0].path;
-  const coverImagePath = req?.files?.coverImage[0].path;
-
-  console.log(avatarImagePath, coverImagePath);
-
-  if (!email && !username && !avatarImagePath && !coverImagePath) {
+  if (
+    !email &&
+    !username &&
+    (!req.files || Object.keys(req.files).length === 0)
+  ) {
     return res
       .status(201)
       .json(
         new ApiResponse(
           201,
           { data: "no updation found" },
-          "proile not updated "
+          "profile not updated"
         )
       );
   }
@@ -147,27 +219,28 @@ const updateUserInfo = asyncHandler(async (req, res) => {
     throw new ApiError(400, "No user found");
   }
 
-  const { profileCoverImage, profileAvatar } = userprofileToUpdate;
+  const updates = {};
+  if (email) updates.email = email;
+  if (username) updates.username = username;
 
-  const newCoverImageUrl = await updloadFileToCloud(coverImagePath);
-  const newAvatarImageUrl = await updloadFileToCloud(avatarImagePath);
-
-  if (!newCoverImageUrl || !newAvatarImageUrl) {
-    throw new ApiError(500, "error while uploading files to cloud");
-  }
-
-  if (profileCoverImage || profileAvatar) {
-    await deleteExisting(profileCoverImage);
-    await deleteExisting(profileAvatar);
+  if (req.files) {
+    const { avatar, coverImage } = req.files;
+    if (avatar && avatar.length > 0) {
+      const avatarUrl = await updloadFileToCloud(avatar[0].path);
+      if (userprofileToUpdate.profileAvatar)
+        await deleteExisting(userprofileToUpdate.profileAvatar);
+      updates.profileAvatar = avatarUrl.secure_url; // Assuming `avatarUrl` is an object with `secure_url` property
+    }
+    if (coverImage && coverImage.length > 0) {
+      const coverImageUrl = await updloadFileToCloud(coverImage[0].path);
+      if (userprofileToUpdate.profileCoverImage)
+        await deleteExisting(userprofileToUpdate.profileCoverImage);
+      updates.profileCoverImage = coverImageUrl.secure_url; // Assuming `coverImageUrl` is an object with `secure_url` property
+    }
   }
 
   try {
-    await userprofileToUpdate.updateOne({
-      username: username,
-      email: email,
-      profileCoverImage: newCoverImageUrl?.url,
-      profileAvatar: newAvatarImageUrl?.url,
-    });
+    await userprofileToUpdate.updateOne(updates);
   } catch (error) {
     throw new ApiError(500, error.message);
   }
@@ -207,6 +280,68 @@ const getUserComments = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, comments, "comments fetched successfully"));
 });
 
+const changePassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword, reEnteredPassword } = req.body;
+  const userId = req.user?._id ;
+
+  if (!currentPassword || !newPassword || !reEnteredPassword) {
+    throw new ApiError(400, "Enter required fields");
+  }
+
+  // check if the both new passwords are equal(same)
+  if (newPassword !== reEnteredPassword) {
+    throw new ApiError(400, "Re-entered passwords doesn't match");
+  }
+
+  //finding the userinfo
+  const userToUpdate = await User.findById(userId);
+
+  if (!userToUpdate) {
+    throw new ApiError(400, "User doesn't exist");
+  }
+  // check if the currentpassword is equal to the dbpassword using isPasswordCorrect method
+  const isPasswordValid = await userToUpdate.isPasswordCorrect(currentPassword);
+
+  if (!isPasswordValid) {
+    throw new ApiError(405, "current password is incorrect");
+  }
+
+  // if code reaches here that means enterd password is correct
+  userToUpdate.password = newPassword;
+
+  const passwordUpdation = await userToUpdate.save({
+    validateBeforeSave: false,
+  });
+  if (!passwordUpdation) {
+    return res
+      .status(500)
+      .json(new ApiResponse(400, "internal server error, Try Again"));
+  }
+
+  //returning the final result
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Password Updated Successfully "));
+});
+
+const sendForgotMail = asyncHandler(async (req, res) => {
+  try {
+    const info = await transporter.sendMail({
+      from: '"support team Blogslay" <noreplay@blogslay.support>', // sender address
+      to: "mr.kartikesh@gmail.com", // list of receivers
+      subject: "Reset your parssword", // Subject line
+      text: "", // plain text body
+      html: "<h1>Hey user</h1><p>this is the code for resetting your password : 103134</p> ", // html body
+    });
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { info }, "email sent successfully"));
+  } catch (error) {
+    return res
+      .status(400)
+      .json(new ApiResponse(400, { error }, "failed so send email"));
+  }
+});
 export {
   updateUserInfo,
   registerUser,
@@ -216,4 +351,6 @@ export {
   getUserProfile,
   getLikedPosts,
   getUserComments,
+  sendForgotMail,
+  changePassword,
 };

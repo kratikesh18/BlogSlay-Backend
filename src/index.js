@@ -4,6 +4,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import connectToDB from "./DB/index.js";
 import userRouter from "./routes/user.router.js";
+import errorHandler from "./Middlewares/errorHandler.middleware.js";
 
 dotenv.config({ path: "/.env" });
 
@@ -29,6 +30,7 @@ app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(cookieParser());
 
 app.use("/api/v1/user", userRouter);
+app.use(errorHandler);
 
 connectToDB()
   .then(() => {

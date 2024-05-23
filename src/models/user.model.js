@@ -34,13 +34,16 @@ const userSchema = new Schema({
   myPosts: [{ type: mongoose.Types.ObjectId, ref: "Post" }],
 });
 
+// saving the password to db after encrypting
 userSchema.pre("save", async function (next) {
+  // if it is not modifide then going to the next
   if (!this.isModified("password")) return next();
-
+  
   this.password = await bcrypt.hash(this.password, 10);
   next();
 });
 
+// providing a method for checking if the password is correct
 userSchema.methods.isPasswordCorrect = async function (password) {
   return await bcrypt.compare(password, this.password);
 };

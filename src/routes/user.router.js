@@ -3,6 +3,7 @@ import { upload } from "../Middlewares/multer.middleware.js";
 import { verifyJwt } from "../Middlewares/auth.middleware.js";
 
 import {
+  changePassword,
   getLikedPosts,
   getProfile,
   getUserComments,
@@ -10,6 +11,7 @@ import {
   loginUser,
   logoutUser,
   registerUser,
+  sendForgotMail,
   updateUserInfo,
 } from "../Controllers/user.controller.js";
 
@@ -54,11 +56,14 @@ router.route("/updateuserinfo").patch(
 // post routers
 router.route("/allposts").get(getAllPosts);
 router.route("/post/:id").get(post);
+
 router.route("/getMyPosts").get(verifyJwt, getMyAllPosts);
 router.route("/addComment").post(verifyJwt, addComment);
 router.route("/addlike").post(verifyJwt, increaseLikes);
 router.route("/removelike").delete(verifyJwt, removeLike);
 router.route("/deletecomment").delete(verifyJwt, deleteComment);
+router.route("/changepassword").patch(verifyJwt, changePassword);
+
 
 router
   .route("/updatePost")
@@ -70,5 +75,5 @@ router
 // upload.fields([{ name: "blogImage", maxCount: 1 }])
 
 router.route("/delete/:id").delete(deletePost);
-
+router.route("/sendmail").post(sendForgotMail);
 export default router;
