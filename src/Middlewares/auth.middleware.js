@@ -11,7 +11,7 @@ const verifyJwt = asyncHandler(async (req, res, next) => {
         req.headers.authorization.replace("Bearer ", "");
 
     if (!token) {
-      console.log("Token NOt fond Error");
+      console.log("Token Not fond Error");
       throw new ApiError(401, "Token NOT Found");
     }
 

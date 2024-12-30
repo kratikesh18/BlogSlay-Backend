@@ -121,78 +121,6 @@ const logoutUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, { succcess: "user logged out " }));
 });
 
-// const updateUserInfo = asyncHandler(async (req, res) => {
-//   //extracting the username and email and getting  the userid
-//   const { email, username } = req.body;
-//   const userid = req.user?._id;
-
-//   // getting the files for updation
-//   const avatarImagePath = req?.files?.avatar[0].path;
-//   const coverImagePath = req?.files?.coverImage[0].path;
-
-//   console.log(avatarImagePath, coverImagePath);
-
-//   // if theree is not updateion we are sending response to nothing
-//   if (!email && !username && !avatarImagePath && !coverImagePath) {
-//     return res
-//       .status(201)
-//       .json(
-//         new ApiResponse(
-//           201,
-//           { data: "no updation found" },
-//           "proile not updated "
-//         )
-//       );
-//   }
-
-//   // now we have updation thats why we are finding the user
-//   const userprofileToUpdate = await User.findById(userid);
-
-//   if (!userprofileToUpdate) {
-//     throw new ApiError(400, "No user found");
-//   }
-
-//   // getting the existing urls of the photos
-//   const { profileCoverImage, profileAvatar } = userprofileToUpdate;
-
-//   // we have new photos to upload so we are uploading and getting the url
-//   const newCoverImageUrl = await updloadFileToCloud(coverImagePath);
-//   const newAvatarImageUrl = await updloadFileToCloud(avatarImagePath);
-
-//   //handling url
-//   if (!newCoverImageUrl || !newAvatarImageUrl) {
-//     throw new ApiError(500, "error while uploading files to cloud");
-//   }
-
-//   // deleting the existing the if they exist
-//   if (profileCoverImage) {
-//     await deleteExisting(profileCoverImage);
-//   }
-//   if (profileAvatar) {
-//     await deleteExisting(profileAvatar);
-//   }
-
-//   // updating the userProfileToUpdate
-//   try {
-//     await userprofileToUpdate.updateOne({
-//       username: username,
-//       email: email,
-//       profileCoverImage: newCoverImageUrl?.url,
-//       profileAvatar: newAvatarImageUrl?.url,
-//     });
-//   } catch (error) {
-//     throw new ApiError(500, error.message);
-//   }
-
-//   const userToSend = await User.findById(userid);
-
-//   return res
-//     .status(200)
-//     .json(new ApiResponse(200, userToSend, "User Updated Successfully"));
-// });
-
-// Not mine code
-
 const updateUserInfo = asyncHandler(async (req, res) => {
   const { email, username } = req.body;
   const userid = req.user?._id;
@@ -354,3 +282,80 @@ export {
   sendForgotMail,
   changePassword,
 };
+
+
+
+//*********** Garbage ***********  *//
+
+
+// const updateUserInfo = asyncHandler(async (req, res) => {
+//   //extracting the username and email and getting  the userid
+//   const { email, username } = req.body;
+//   const userid = req.user?._id;
+
+//   // getting the files for updation
+//   const avatarImagePath = req?.files?.avatar[0].path;
+//   const coverImagePath = req?.files?.coverImage[0].path;
+
+//   console.log(avatarImagePath, coverImagePath);
+
+//   // if theree is not updateion we are sending response to nothing
+//   if (!email && !username && !avatarImagePath && !coverImagePath) {
+//     return res
+//       .status(201)
+//       .json(
+//         new ApiResponse(
+//           201,
+//           { data: "no updation found" },
+//           "proile not updated "
+//         )
+//       );
+//   }
+
+//   // now we have updation thats why we are finding the user
+//   const userprofileToUpdate = await User.findById(userid);
+
+//   if (!userprofileToUpdate) {
+//     throw new ApiError(400, "No user found");
+//   }
+
+//   // getting the existing urls of the photos
+//   const { profileCoverImage, profileAvatar } = userprofileToUpdate;
+
+//   // we have new photos to upload so we are uploading and getting the url
+//   const newCoverImageUrl = await updloadFileToCloud(coverImagePath);
+//   const newAvatarImageUrl = await updloadFileToCloud(avatarImagePath);
+
+//   //handling url
+//   if (!newCoverImageUrl || !newAvatarImageUrl) {
+//     throw new ApiError(500, "error while uploading files to cloud");
+//   }
+
+//   // deleting the existing the if they exist
+//   if (profileCoverImage) {
+//     await deleteExisting(profileCoverImage);
+//   }
+//   if (profileAvatar) {
+//     await deleteExisting(profileAvatar);
+//   }
+
+//   // updating the userProfileToUpdate
+//   try {
+//     await userprofileToUpdate.updateOne({
+//       username: username,
+//       email: email,
+//       profileCoverImage: newCoverImageUrl?.url,
+//       profileAvatar: newAvatarImageUrl?.url,
+//     });
+//   } catch (error) {
+//     throw new ApiError(500, error.message);
+//   }
+
+//   const userToSend = await User.findById(userid);
+
+//   return res
+//     .status(200)
+//     .json(new ApiResponse(200, userToSend, "User Updated Successfully"));
+// });
+
+// Not mine code

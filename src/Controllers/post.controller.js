@@ -20,7 +20,7 @@ const createNewPost = asyncHandler(async (req, res) => {
     );
   }
 
-  const author = await User.findById(authorId);
+  const author = await User.findById(authorId).select("username");
 
   const createdPost = await Post.create({
     title,
